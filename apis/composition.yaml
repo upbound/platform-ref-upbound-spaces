@@ -57,9 +57,6 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.operators
                 toFieldPath: spec.parameters.operators
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.parameters.region
 
           - name: spaces-core
             base:
