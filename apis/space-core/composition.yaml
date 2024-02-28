@@ -1,0 +1,56 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcore.spaces.platformref.upbound.io
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: spaces.platformref.upbound.io/v1alpha1
+    kind: XCore
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: upboundcare-function-conditional-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: spaces
+            base:
+              apiVersion: helm.crossplane.io/v1beta1
+              kind: Release
+              spec:
+                rollbackLimit: 3
+                forProvider:
+                  namespace: upbound-system
+                  chart:
+                    name: spaces
+                    repository: oci://us-west1-docker.pkg.dev/orchestration-build/upbound-environments
+                  set:
+                    - name: "account"
+                    - name: "clusterType"
+                    - name: "ingress.host"
+                    - name: "features.alpha.eso.enabled"
+                      value: "true"
+                    - name: "features.alpha.eso.namespace"
+                      value: "external-secrets"
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigName
+                toFieldPath: spec.providerConfigRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.spaces.account
+                toFieldPath: spec.forProvider.set[0].value
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.spaces.clusterType
+                toFieldPath: spec.forProvider.set[1].value
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.spaces.dns.spacesRouterDomain
+                toFieldPath: spec.forProvider.set[2].value
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.spaces.pullSecretRef
+                toFieldPath: spec.forProvider.chart.pullSecretRef
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.spaces.version
+                toFieldPath: spec.forProvider.chart.version

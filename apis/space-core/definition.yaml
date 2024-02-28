@@ -1,0 +1,65 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcore.spaces.platformref.upbound.io
+spec:
+  defaultCompositeDeletePolicy: Foreground
+  group: spaces.platformref.upbound.io
+  names:
+    kind: XCore
+    plural: xcore
+  versions:
+    - name: v1alpha1
+      additionalPrinterColumns:
+        - jsonPath: .spec.parameters.spaces.version
+          name: SPACES
+          type: string
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    providerConfigName:
+                      type: string
+                    spaces:
+                      type: object
+                      description: "Defines the configuration for spaces."
+                      properties:
+                        version:
+                          type: string
+                          description: "The version of the space configuration."
+                        dns:
+                          type: object
+                          properties:
+                            spacesRouterDomain:
+                              type: string
+                              description: "The domain for the spaces router."
+                        account:
+                          type: string
+                          description: "The account identifier for the space."
+                        clusterType:
+                          type: string
+                          description: "The type of cluster to deploy for the space."
+                        pullSecretRef:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: "The name of the pull secret to use."
+                            namespace:
+                              type: string
+                              description: "The namespace of the pull secret."
+            status:
+              type: object
+              properties:
+                status:
+                  description: Freeform field containing status information
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true

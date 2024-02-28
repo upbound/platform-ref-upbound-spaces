@@ -1,0 +1,46 @@
+apiVersion: spaces.platformref.upbound.io/v1alpha1
+kind: Space
+metadata:
+  name: hostcluster
+  namespace: default
+spec:
+  compositeDeletePolicy: Foreground
+  parameters:
+    cloud: aws
+    id: hostcluster
+    region: us-west-2
+    version: "1.27"
+    iam:
+      # Important: Please specify an iamRoleArn to access the AWS EKS Cluster deployed as part of CNOE.
+      # Without specifying a valid roleArn, you will not be able to log in to the EKS cluster.
+      # If you are using AWS SSO Roles, ensure to remove 'aws-reserved/sso.amazonaws.com/' from the ARN.
+      # For example, convert this:
+      #   arn:aws:iam::123456789:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
+      # To this:
+      #   arn:aws:iam::123456789:role/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
+      # roleArn: arn:aws:iam::123456789:role/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
+      roleArn: arn:aws:iam::609897127049:role/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
+    operators:
+      externaldns:
+        aws:
+          # To leverage external-dns for managing the spaces.dns.spacesRouterDomain zone entry,
+          # substitute the placeholder values with your actual Route53 Zone ID and Route53 Zone Name.
+          # route53zoneId: Z0000000000000000000
+          # route53ZoneName: example.com
+          route53ZoneId: Z0115025YFQ7ZQF6BJ6N
+          route53ZoneName: upboundrocks.cloud
+      crossplane:
+        providers:
+          - name: provider-helm
+            package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0
+            localRbac: true
+          - name: provider-kubernetes
+            package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.12.1
+            localRbac: true
+    spaces:
+      dns:
+        spacesRouterDomain: platform-ref-upbound-spaces.upboundrocks.cloud
+      clusterType: eks
+      account: platform-ref
+  writeConnectionSecretToRef:
+    name: hostcluster-kubeconfig
