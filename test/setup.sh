@@ -62,6 +62,20 @@ spec:
 EOF
   fi
 
+  if [[ -n "${SPACES:-}" ]]; then
+    echo "Creating the SPACES pull secrets..."
+
+    ${KUBECTL} -n upbound-system create secret generic upbound-provider-helm-pull \
+      --from-literal=username="_json_key" \
+      --from-literal=password="${SPACES}"
+
+    ${KUBECTL} -n upbound-system create secret docker-registry upbound-pull-secret \
+      --docker-server="https://us-west1-docker.pkg.dev" \
+      --docker-username="_json_key" \
+      --docker-password="${SPACES}" \
+      --docker-email="uptest@upbound.io"
+  fi
+
   if [[ -n "${AZURE:-}" ]]; then
     echo "Creating the AZURE default cloud credentials secret..."
     ${KUBECTL} -n upbound-system create secret generic azure-creds --from-literal=credentials="${AZURE}" --dry-run=client -o yaml | ${KUBECTL} apply -f -

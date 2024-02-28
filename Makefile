@@ -13,7 +13,7 @@ PLATFORMS ?= linux_amd64
 
 UP_VERSION = v0.24.1
 UP_CHANNEL = stable
-UPTEST_VERSION = v0.11.0
+UPTEST_VERSION = v0.11.1
 
 -include build/makelib/k8s_tools.mk
 # ====================================================================================
@@ -23,7 +23,7 @@ UPTEST_VERSION = v0.11.0
 # certain conventions such as the default examples root or package directory.
 XPKG_DIR = $(shell pwd)
 XPKG_EXAMPLES_DIR = .up/examples
-XPKG_IGNORE = .github/workflows/*.yml,.github/workflows/*.yaml,init/*.yaml,examples/flux/*.yaml,examples/*.yaml,examples/argocd/*.yaml,.work/uptest-datasource.yaml
+XPKG_IGNORE = .github/workflows/*.yml,.github/workflows/*.yaml,init/*.yaml,examples/*.yaml,.work/uptest-datasource.yaml,examples/**/*.yaml
 
 XPKG_REG_ORGS ?= xpkg.upbound.io/upbound
 # NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
@@ -64,20 +64,23 @@ build.init: $(UP)
 # End to End Testing
 
 # This target requires the following environment variables to be set:
-# $ export UPTEST_CLOUD_CREDENTIALS=$(echo "AWS='$(cat ~/.aws/credentials)'\nAZURE='$(cat ~/.azure/credentials.json)'\nGCP='$(cat ~/.gcloud/credentials.json)")
+# $ export UPTEST_CLOUD_CREDENTIALS=$(echo "AWS='$(cat ~/.aws/credentials)'\nAZURE='$(cat ~/.azure/credentials.json)'\nGCP='$(cat ~/.gcloud/credentials.json)'\nSPACES='$(cat ~/.gcloud/key.json)'")
 uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
 	@$(INFO) running automated tests
-	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) CROSSPLANE_NAMESPACE=$(CROSSPLANE_NAMESPACE) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --data-source="${UPTEST_DATASOURCE_PATH}" --setup-script=test/setup.sh --default-timeout=4800 || $(FAIL)
+	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) CROSSPLANE_NAMESPACE=$(CROSSPLANE_NAMESPACE) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --data-source="${UPTEST_DATASOURCE_PATH}" --setup-script=test/setup.sh --default-timeout=4800 ${SKIP_DELETE} || $(FAIL)
 	@$(OK) running automated tests
 
 # This target requires the following environment variables to be set:
-# $ export UPTEST_CLOUD_CREDENTIALS=$(echo "AWS='$(cat ~/.aws/credentials)'\nAZURE='$(cat ~/.azure/credentials.json)'\nGCP='$(cat ~/.gcloud/credentials.json)")
+# $ export UPTEST_CLOUD_CREDENTIALS=$(echo "AWS='$(cat ~/.aws/credentials)'\nAZURE='$(cat ~/.azure/credentials.json)'\nGCP='$(cat ~/.gcloud/credentials.json)'\nSPACES='$(cat ~/.gcloud/key.json)'")
 e2e: build controlplane.up local.xpkg.deploy.configuration.$(PROJECT_NAME) uptest
 
 render:
-	crossplane beta render examples/aws-cluster.yaml apis/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/azure-cluster.yaml apis/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/space.yaml apis/composition.yaml examples/functions.yaml -r
+	crossplane beta render examples/xr/aws-hostcluster.yaml apis/cluster/composition.yaml examples/functions.yaml -r
+	crossplane beta render examples/xr/azure-hostcluster.yaml apis/cluster/composition.yaml examples/functions.yaml -r
+	crossplane beta render examples/xr/gcp-hostcluster.yaml apis/cluster/composition.yaml examples/functions.yaml -r
+	crossplane beta render examples/xr/space-init.yaml apis/space-init/composition.yaml examples/functions.yaml -r
+	crossplane beta render examples/xr/space-core.yaml apis/space-core/composition.yaml examples/functions.yaml -r
+	crossplane beta render examples/aws-host-space.yaml apis/composition.yaml examples/functions.yaml -r
 
 yamllint:
 	@$(INFO) running yamllint

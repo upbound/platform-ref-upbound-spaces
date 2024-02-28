@@ -1,0 +1,280 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xspaces.spaces.platformref.upbound.io
+spec:
+  defaultCompositeDeletePolicy: Foreground
+  group: spaces.platformref.upbound.io
+  names:
+    kind: XSpace
+    plural: xspaces
+  claimNames:
+    kind: Space
+    plural: spaces
+  connectionSecretKeys:
+    - kubeconfig
+  versions:
+    - name: v1alpha1
+      additionalPrinterColumns:
+        - jsonPath: .spec.parameters.cloud
+          name: CLOUD
+          type: string
+        - jsonPath: .spec.compositionRevisionRef.name
+          name: COMPOSITION REVISION
+          type: string
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  description: Cluster configuration parameters.
+                  properties:
+                    cloud:
+                      description: Cloud is the cloud provider you'd like your cluster resources to be created in.
+                      type: string
+                      enum:
+                        - aws
+                        - gcp
+                        - azure
+                    id:
+                      type: string
+                      description: ID of this Cluster that other objects will use to refer to it.
+                    region:
+                      type: string
+                      description: Region is the region you'd like your resource to be created in.
+                    iam:
+                      type: object
+                      description: IAM configuration to connect as ClusterAdmin.
+                      properties:
+                        roleArn:
+                          description: The IAM Role ARN to connect as ClusterAdmin.
+                          type: string
+                        userArn:
+                          description: The IAM User ARN to connect as ClusterAdmin.
+                          type: string
+                    networkSelector:
+                      type: string
+                      description: NetworkSelector employs a specific type of network architecture.
+                      enum:
+                        - basic
+                      default: basic
+                    deletionPolicy:
+                      description: Delete the external resources when the Claim/XR is deleted. Defaults to Delete
+                      enum:
+                        - Delete
+                        - Orphan
+                      type: string
+                      default: Delete
+                    providerConfigName:
+                      description: Crossplane ProviderConfig to use for provisioning this resources
+                      type: string
+                      default: default
+                    version:
+                      type: string
+                      description: Kubernetes version of the Cluster
+                    nodes:
+                      type: object
+                      description: Cluster node configuration parameters.
+                      default:
+                        count: 5
+                        instanceType: m5.2xlarge
+                      properties:
+                        count:
+                          type: integer
+                          description: Desired node count, from 1 to 100.
+                          default: 5
+                        instanceType:
+                          type: string
+                          description: instance types associated with the Node Group.
+                          default: m5.2xlarge
+                      required:
+                        - count
+                        - instanceType
+                    operators:
+                      type: object
+                      description: "Defines the operators to be deployed with their enabled status and versions."
+                      default:
+                        certmanager:
+                          enabled: true
+                          version: "v1.14.3"
+                        ingressnginx:
+                          enabled: true
+                          version: "4.9.1"
+                        externaldns:
+                          version: "6.34.2"
+                        crossplane:
+                          enabled: true
+                          version: "v1.14.6-up.1"
+                          providers: []
+                      properties:
+                        certmanager:
+                          type: object
+                          default:
+                            enabled: true
+                            version: "v1.14.3"
+                          properties:
+                            enabled:
+                              type: boolean
+                              description: "Indicates if cert-manager is enabled."
+                              default: true
+                            version:
+                              type: string
+                              description: "Specifies the version of cert-manager to use."
+                              default: "v1.14.3"
+                          required:
+                            - enabled
+                            - version
+                        ingressnginx:
+                          type: object
+                          default:
+                            enabled: true
+                            version: "4.9.1"
+                          properties:
+                            enabled:
+                              type: boolean
+                              description: "Indicates if ingress-nginx is enabled."
+                              default: true
+                            version:
+                              type: string
+                              description: "Specifies the version of ingress-nginx to use."
+                              default: "4.9.1"
+                          required:
+                            - enabled
+                            - version
+                        externaldns:
+                          type: object
+                          properties:
+                            aws:
+                              type: object
+                              properties:
+                                enabled:
+                                  type: boolean
+                                  description: "Indicates if AWS external-dns is enabled."
+                                  default: true
+                                route53ZoneId:
+                                  type: string
+                                  description: "The Route53 zone ID for external-dns to manage."
+                                route53ZoneName:
+                                  type: string
+                                  description: "The Route53 zone name for external-dns to manage."
+                            version:
+                              type: string
+                              description: "Specifies the version of external-dns to use."
+                              default: "6.34.2"
+                          required:
+                            - version
+                        crossplane:
+                          type: object
+                          default:
+                            enabled: true
+                            version: "v1.14.6-up.1"
+                            providers: []
+                          properties:
+                            enabled:
+                              type: boolean
+                              description: "Indicates if Crossplane is enabled."
+                              default: true
+                            version:
+                              type: string
+                              description: "Specifies the version of Crossplane to use."
+                              default: "v1.14.6-up.1"
+                            providers:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                    description: "The name of the Crossplane provider."
+                                  package:
+                                    type: string
+                                    description: "The package of the Crossplane provider."
+                                  enabled:
+                                    type: boolean
+                                    description: "Indicates if the Crossplane provider is enabled."
+                                    default: true
+                                  localRbac:
+                                    type: boolean
+                                    description: "Indicates if local RBAC is enabled for the provider."
+                          required:
+                            - enabled
+                            - version
+                            - providers
+                    spaces:
+                      type: object
+                      description: "Defines the configuration for spaces."
+                      default:
+                        version: "1.2.1"
+                        account: ""
+                        clusterType: ""
+                        dns:
+                          spacesRouterDomain: ""
+                        pullSecretRef:
+                          name: upbound-provider-helm-pull
+                          namespace: upbound-system
+                      properties:
+                        version:
+                          type: string
+                          description: "The version of the space configuration."
+                          default: "1.2.1"
+                        dns:
+                          type: object
+                          properties:
+                            spacesRouterDomain:
+                              type: string
+                              description: "The domain for the spaces router."
+                          required:
+                            - spacesRouterDomain
+                        account:
+                          type: string
+                          description: "The account identifier for the space."
+                        clusterType:
+                          type: string
+                          description: "The type of cluster to deploy for the space."
+                        pullSecretRef:
+                          type: object
+                          default:
+                            name: upbound-provider-helm-pull
+                            namespace: upbound-system
+                          properties:
+                            name:
+                              type: string
+                              description: "The name of the pull secret to use."
+                              default: upbound-provider-helm-pull
+                            namespace:
+                              type: string
+                              description: "The namespace of the pull secret."
+                              default: upbound-system
+                          required:
+                            - name
+                            - namespace
+                      required:
+                        - version
+                        - dns
+                        - account
+                        - clusterType
+                        - pullSecretRef
+                  required:
+                    - cloud
+                    - deletionPolicy
+                    - id
+                    - nodes
+                    - operators
+                    - providerConfigName
+                    - region
+                    - spaces
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                subnetIds:
+                  type: array
+                  items:
+                    type: string

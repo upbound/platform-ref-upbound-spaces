@@ -1,0 +1,16 @@
+apiVersion: spaces.platformref.upbound.io/v1alpha1
+kind: XCore
+metadata:
+  name: space-base
+spec:
+  parameters:
+    providerConfigName: aws-spaces-hostcluster
+    spaces:
+      version: 1.2.1
+      dns:
+        spacesRouterDomain: platform-ref-upbound-spaces.upboundrocks.cloud
+      clusterType: eks
+      account: platform-ref
+      pullSecretRef:
+        name: upbound-provider-helm-pull
+        namespace: upbound-system

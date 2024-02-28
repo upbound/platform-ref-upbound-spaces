@@ -1,0 +1,21 @@
+# This demo manifest illustrates how to create control planes in alternative spaces.
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+spec:
+  forProvider:
+    manifest:
+      apiVersion: spaces.upbound.io/v1beta1
+      kind: ControlPlane
+      metadata:
+        name: ctp-remote
+        namespace: default
+      spec:
+        crossplane:
+          version: 1.14.6-up.1
+          autoUpgrade:
+            channel: Stable 
+        writeConnectionSecretToRef:
+          name: ctp-remote
+          namespace: default
+  providerConfigRef:
+    name: hostcluster
