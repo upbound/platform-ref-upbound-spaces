@@ -24,7 +24,7 @@ spec:
             localRbac: true
     spaces:
       dns:
-        spacesRouterDomain: platform-ref-upbound-spaces-gke.upboundrocks.cloud
+        spacesRouterDomain: platform-ref-upbound-spaces-gke.${data.route53ZoneName}
       clusterType: gke
       account: platform-ref
   writeConnectionSecretToRef:
