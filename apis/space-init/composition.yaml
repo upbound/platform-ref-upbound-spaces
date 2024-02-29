@@ -325,7 +325,10 @@ spec:
                   fromFieldPath: Optional
 
           - name: external-dns-irsa
-            condition: observed.composite.resource.spec.parameters.operators.externaldns.aws.enabled == true
+            condition: |
+              "externaldns" in observed.composite.resource.spec.parameters.operators &&
+              "aws" in observed.composite.resource.spec.parameters.operators.externaldns &&
+              observed.composite.resource.spec.parameters.operators.externaldns.aws.enabled == true
             base:
               apiVersion: aws.platform.upbound.io/v1alpha1
               kind: XIRSA
@@ -374,7 +377,10 @@ spec:
                 toFieldPath: spec.parameters.policyDocument
 
           - name: external-dns
-            condition: observed.composite.resource.spec.parameters.operators.externaldns.aws.enabled == true
+            condition: |
+              "externaldns" in observed.composite.resource.spec.parameters.operators &&
+              "aws" in observed.composite.resource.spec.parameters.operators.externaldns &&
+              observed.composite.resource.spec.parameters.operators.externaldns.aws.enabled == true
             base:
               apiVersion: helm.crossplane.io/v1beta1
               kind: Release

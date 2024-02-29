@@ -10,6 +10,9 @@ spec:
     id: hostcluster
     region: us-west-2
     version: "1.27"
+    nodes:
+      count: 5
+      instanceType: m5.2xlarge
     iam:
       # Important: Please specify an iamRoleArn to access the AWS EKS Cluster deployed as part of CNOE.
       # Without specifying a valid roleArn, you will not be able to log in to the EKS cluster.

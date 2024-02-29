@@ -81,18 +81,13 @@ spec:
                     nodes:
                       type: object
                       description: Cluster node configuration parameters.
-                      default:
-                        count: 5
-                        instanceType: m5.2xlarge
                       properties:
                         count:
                           type: integer
                           description: Desired node count, from 1 to 100.
-                          default: 5
                         instanceType:
                           type: string
                           description: instance types associated with the Node Group.
-                          default: m5.2xlarge
                       required:
                         - count
                         - instanceType
