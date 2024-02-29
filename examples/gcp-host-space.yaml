@@ -1,0 +1,31 @@
+apiVersion: spaces.platformref.upbound.io/v1alpha1
+kind: Space
+metadata:
+  name: hostcluster-gcp
+  namespace: default
+spec:
+  compositeDeletePolicy: Foreground
+  parameters:
+    cloud: gcp
+    id: hostcluster-gcp
+    region: us-west2
+    version: latest
+    nodes:
+      count: 3
+      instanceType: e2-standard-4
+    operators:
+      crossplane:
+        providers:
+          - name: provider-helm
+            package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0
+            localRbac: true
+          - name: provider-kubernetes
+            package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.12.1
+            localRbac: true
+    spaces:
+      dns:
+        spacesRouterDomain: platform-ref-upbound-spaces-gke.upboundrocks.cloud
+      clusterType: gke
+      account: platform-ref
+  writeConnectionSecretToRef:
+    name: hostcluster-gcp-kubeconfig
