@@ -24,7 +24,7 @@ spec:
             localRbac: true
     spaces:
       dns:
-        spacesRouterDomain: platform-ref-upbound-spaces-aks.upboundrocks.cloud
+        spacesRouterDomain: platform-ref-upbound-spaces-aks.${data.route53ZoneName}
       clusterType: aks
       account: platform-ref
   writeConnectionSecretToRef:
