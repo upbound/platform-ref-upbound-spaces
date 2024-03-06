@@ -35,6 +35,10 @@ spec:
                       value: "true"
                     - name: "features.alpha.eso.namespace"
                       value: "external-secrets"
+                    - name: "features.alpha.argocdPlugin.enabled"
+                      value: "true"
+                    - name: "features.alpha.argocdPlugin.target.secretNamespace"
+                      value: "argocd"
             patches:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.providerConfigName

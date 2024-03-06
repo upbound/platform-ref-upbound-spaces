@@ -1,0 +1,9 @@
+key:
+  components:
+    - name: spaces-reference-architecture
+      namespace: upbound-system
+      server: https://kubernetes.default.svc
+      project: default
+      repoUrl: https://github.com/upbound/spaces-reference-architecture.git
+      version: HEAD
+      folder: "bootstrap/"
