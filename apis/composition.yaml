@@ -55,8 +55,17 @@ spec:
                 fromFieldPath: spec.parameters.id
                 toFieldPath: spec.parameters.providerConfigName
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.operators
-                toFieldPath: spec.parameters.operators
+                fromFieldPath: spec.parameters.operators.certmanager
+                toFieldPath: spec.parameters.operators.certmanager
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.ingressnginx
+                toFieldPath: spec.parameters.operators.ingressnginx
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.externaldns
+                toFieldPath: spec.parameters.operators.externaldns
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.crossplane
+                toFieldPath: spec.parameters.operators.crossplane
 
           - name: spaces-core
             base:
@@ -106,6 +115,49 @@ spec:
             readinessChecks:
               - type: None
 
+          - name: argocd
+            condition: |
+              "argocd" in observed.composite.resource.spec.parameters.operators &&
+              observed.composite.resource.spec.parameters.operators.argocd.enabled == true
+            base:
+              apiVersion: gitops.platform.upbound.io/v1alpha1
+              kind: XArgo
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.id
+                toFieldPath: spec.parameters.providerConfigName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.argocd.ingressUrl
+                toFieldPath: spec.parameters.ingressUrl
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.argocd.git
+                toFieldPath: spec.parameters.source.git
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.argocd.resourceExclusions
+                toFieldPath: spec.parameters.resourceExclusions
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.argocd.resourceInclusions
+                toFieldPath: spec.parameters.resourceInclusions
+
+          - name: usageXClusterByXArgo
+            condition: |
+              "argocd" in observed.composite.resource.spec.parameters.operators &&
+              observed.composite.resource.spec.parameters.operators.argocd.enabled == true
+            base:
+              apiVersion: apiextensions.crossplane.io/v1alpha1
+              kind: Usage
+              spec:
+                by:
+                  apiVersion: gitops.platform.upbound.io/v1alpha1
+                  kind: XArgo
+                  resourceSelector:
+                    matchControllerRef: true
+                of:
+                  apiVersion: spaces.platformref.upbound.io/v1alpha1
+                  kind: XCluster
+                  resourceSelector:
+                    matchControllerRef: true
+
     - step: ordered-creation
       functionRef:
         name: crossplane-contrib-function-sequencer
@@ -119,3 +171,9 @@ spec:
           - sequence:
               - spaces-init
               - spaces-core
+          - sequence:
+              - spaces-core
+              - argocd
+          - sequence:
+              - spaces-core
+              - usageXClusterByXArgo
