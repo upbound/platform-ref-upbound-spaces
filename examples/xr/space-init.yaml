@@ -20,7 +20,7 @@ spec:
         version: "6.34.2"
       crossplane:
         enabled: true
-        version: v1.14.6-up.1
+        version: v1.15.2-up.1
         providers:
           - name: provider-helm
             package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0
