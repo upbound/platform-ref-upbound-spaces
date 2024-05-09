@@ -67,7 +67,7 @@ build.init: $(UP)
 # $ export UPTEST_CLOUD_CREDENTIALS=$(echo "AWS='$(cat ~/.aws/credentials)'\nAZURE='$(cat ~/.azure/credentials.json)'\nGCP='$(cat ~/.gcloud/credentials.json)'\nSPACES='$(cat ~/.gcloud/key.json)'")
 uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
 	@$(INFO) running automated tests
-	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) CROSSPLANE_NAMESPACE=$(CROSSPLANE_NAMESPACE) $(UPTEST) e2e examples/gcp-host-space.yaml,examples/aws-host-space.yaml,examples/azure-host-space.yaml --setup-script=test/setup.sh --default-timeout=4800 ${SKIP_DELETE} || $(FAIL)
+	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) CROSSPLANE_NAMESPACE=$(CROSSPLANE_NAMESPACE) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --data-source="${UPTEST_DATASOURCE_PATH}" --setup-script=test/setup.sh --default-timeout=4800 ${SKIP_DELETE} || $(FAIL)
 	@$(OK) running automated tests
 
 # This target requires the following environment variables to be set:
