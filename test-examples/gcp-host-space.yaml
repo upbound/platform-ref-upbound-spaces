@@ -23,7 +23,7 @@ spec:
             package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.12.1
             localRbac: true
       argocd:
-        enabled: true
+        enabled: false
         ingressUrl: argocd-platform-ref-upbound-spaces.${data.route53ZoneName}
         git:
           url: https://github.com/upbound/platform-ref-upbound-spaces.git
