@@ -3,6 +3,9 @@ kind: Cluster
 metadata:
   name: azure-spaces-hostcluster
   namespace: default
+  annotations:
+    render.crossplane.io/composition-path: apis/cluster/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
 spec:
   compositeDeletePolicy: Foreground
   parameters:

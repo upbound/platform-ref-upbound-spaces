@@ -11,7 +11,7 @@ PLATFORMS ?= linux_amd64
 # ====================================================================================
 # Setup Kubernetes tools
 
-UP_VERSION = v0.28.0
+UP_VERSION = v0.29.0
 UP_CHANNEL = stable
 UPTEST_VERSION = v0.11.1
 
@@ -75,12 +75,19 @@ uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
 e2e: build controlplane.up local.xpkg.deploy.configuration.$(PROJECT_NAME) uptest
 
 render:
-	crossplane beta render examples/xr/aws-hostcluster.yaml apis/cluster/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/xr/azure-hostcluster.yaml apis/cluster/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/xr/gcp-hostcluster.yaml apis/cluster/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/xr/space-init.yaml apis/space-init/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/xr/space-core.yaml apis/space-core/composition.yaml examples/functions.yaml -r
-	crossplane beta render examples/aws-host-space.yaml apis/composition.yaml examples/functions.yaml -r
+	@indir="./examples"; \
+	for file in $$(find $$indir -type f -name '*.yaml' ); do \
+	    doc_count=$$(grep -c '^---' "$$file"); \
+	    if [[ $$doc_count -gt 0 ]]; then \
+	        continue; \
+	    fi; \
+	    COMPOSITION=$$(yq eval '.metadata.annotations."render.crossplane.io/composition-path"' $$file); \
+	    FUNCTION=$$(yq eval '.metadata.annotations."render.crossplane.io/function-path"' $$file); \
+	    if [[ "$$COMPOSITION" == "null" || "$$FUNCTION" == "null" ]]; then \
+	        continue; \
+	    fi; \
+		crossplane beta render $$file $$COMPOSITION $$FUNCTION -x -r; \
+	done
 
 yamllint:
 	@$(INFO) running yamllint
