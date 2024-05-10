@@ -16,7 +16,7 @@ spec:
         apiVersion: pt.fn.crossplane.io/v1beta1
         kind: Resources
         resources:
-          - name: aws-kubernetes-cluster
+          - name: managed-kubernetes-cluster
             base:
               apiVersion: spaces.platformref.upbound.io/v1alpha1
               kind: XCluster
@@ -166,7 +166,7 @@ spec:
         kind: Input
         rules:
           - sequence:
-              - aws-kubernetes-cluster
+              - managed-kubernetes-cluster
               - spaces-init
           - sequence:
               - spaces-init

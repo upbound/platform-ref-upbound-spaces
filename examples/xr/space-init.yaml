@@ -2,6 +2,9 @@ apiVersion: spaces.platformref.upbound.io/v1alpha1
 kind: XInit
 metadata:
   name: space-base
+  annotations:
+    render.crossplane.io/composition-path: apis/space-init/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
 spec:
   parameters:
     providerConfigName: aws-spaces-hostcluster
@@ -15,12 +18,12 @@ spec:
       externaldns:
         aws:
           enabled: true
-          route53ZoneId: Z0115025YFQ7ZQF6BJ6N
-          route53ZoneName: upboundrocks.cloud
+          route53ZoneId: ${data.route53ZoneId}
+          route53ZoneName: ${data.route53ZoneName}
         version: "6.34.2"
       crossplane:
         enabled: true
-        version: v1.14.6-up.1
+        version: v1.15.2-up.1
         providers:
           - name: provider-helm
             package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0

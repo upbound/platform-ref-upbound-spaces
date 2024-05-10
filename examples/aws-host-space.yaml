@@ -3,6 +3,9 @@ kind: Space
 metadata:
   name: hostcluster
   namespace: default
+  annotations:
+    render.crossplane.io/composition-path: apis/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
 spec:
   compositeDeletePolicy: Foreground
   parameters:
@@ -21,7 +24,7 @@ spec:
       #   arn:aws:iam::123456789:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
       # To this:
       #   arn:aws:iam::123456789:role/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
-      roleArn: arn:aws:iam::123456789:role/AWSReservedSSO_AdministratorAccess_d703c73ed340fde7
+      roleArn: ${data.awsAdminRoleArn}
     operators:
       externaldns:
         aws:
