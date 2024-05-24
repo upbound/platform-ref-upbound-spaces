@@ -1,0 +1,96 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xworkloadidentity.gcp.platform.upbound.io
+spec:
+  compositeTypeRef:
+    apiVersion: gcp.platform.upbound.io/v1alpha1
+    kind: XWORKLOADIDENTITY
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: crossplane-contrib-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        patchSets:
+          - name: Name
+            patches:
+              - fromFieldPath: metadata.name
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+                type: FromCompositeFieldPath
+          - name: providerConfigRef
+            patches:
+              - fromFieldPath: spec.parameters.providerConfigName
+                toFieldPath: spec.providerConfigRef.name
+                type: FromCompositeFieldPath
+          - name: deletionPolicy
+            patches:
+              - fromFieldPath: spec.parameters.deletionPolicy
+                toFieldPath: spec.deletionPolicy
+                type: FromCompositeFieldPath
+        resources:
+          - name: projectiammember
+            base:
+              apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+              kind: ProjectIAMMember
+              spec:
+                forProvider:
+                  role: roles/dns.reader
+            patches:
+              - type: PatchSet
+                patchSetName: providerConfigRef
+              - type: PatchSet
+                patchSetName: deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.id
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - fromFieldPath: spec.parameters.dnsProject
+                toFieldPath: spec.forProvider.project
+                type: FromCompositeFieldPath
+              - fromFieldPath: spec.parameters.member
+                toFieldPath: spec.forProvider.member
+                type: FromCompositeFieldPath
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.GKEProjectID
+                    - fromFieldPath: spec.parameters.serviceAccount.namespace
+                    - fromFieldPath: spec.parameters.serviceAccount.name
+                strategy: string
+                string:
+                  fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
+                toFieldPath: spec.forProvider.member
+
+          - name: managedzoneiammember
+            base:
+              apiVersion: dns.gcp.upbound.io/v1beta1
+              kind: ManagedZoneIAMMember
+              spec:
+                forProvider:
+                  role: roles/dns.admin
+            patches:
+              - type: PatchSet
+                patchSetName: providerConfigRef
+              - type: PatchSet
+                patchSetName: deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.id
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - fromFieldPath: spec.parameters.dnsProject
+                toFieldPath: spec.forProvider.project
+                type: FromCompositeFieldPath
+              - fromFieldPath: spec.parameters.managedZone
+                toFieldPath: spec.forProvider.managedZone
+                type: FromCompositeFieldPath
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.GKEProjectID
+                    - fromFieldPath: spec.parameters.serviceAccount.namespace
+                    - fromFieldPath: spec.parameters.serviceAccount.name
+                strategy: string
+                string:
+                  fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
+                toFieldPath: spec.forProvider.member

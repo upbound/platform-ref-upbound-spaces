@@ -1,0 +1,79 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xworkloadidentitys.gcp.platform.upbound.io
+  labels:
+    provider: gcp
+spec:
+  claimNames:
+    kind: WorkloadIdentity
+    plural: workloadidentitys
+  group: gcp.platform.upbound.io
+  names:
+    kind: XWORKLOADIDENTITY
+    plural: xworkloadidentitys
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  description: Workload Identity configuration parameters.
+                  properties:
+                    id:
+                      type: string
+                      description: ID of this Workload Identity that other objects will use to refer to it.
+                    deletionPolicy:
+                      description: Delete the external resources when the Claim/XR is deleted. Defaults to Delete.
+                      enum:
+                        - Delete
+                        - Orphan
+                      type: string
+                      default: Delete
+                    providerConfigName:
+                      description: Crossplane ProviderConfig to use for provisioning this resources.
+                      type: string
+                      default: default
+                    serviceAccount:
+                      type: object
+                      description: Configuration for SA
+                      properties:
+                        name:
+                          type: string
+                          description: name kubernetes SA
+                        namespace:
+                          type: string
+                          description: namespace kubernetes SA
+                      required:
+                        - name
+                        - namespace
+                  required:
+                    - id
+                    - gkeProject
+                    - knsName
+                    - ksaName
+                    - dnsProject
+                    - zoneName
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                workloadIdentity:
+                  description: Freeform field containing status information for Workload Identity.
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                member:
+                  description: The member string used in IAM policies.
+                  type: string
+                observed:
+                  description: Freeform field containing information about the observed status.
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
