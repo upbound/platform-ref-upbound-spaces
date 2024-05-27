@@ -121,7 +121,7 @@ spec:
                 toFieldPath: metadata.annotations[crossplane.io/external-name]
                 transforms:
                   - string:
-                      fmt: '%s-worload-identity-settings'
+                      fmt: '%s-workload-identity-settings'
                       type: Format
                     type: string
                 type: FromCompositeFieldPath
@@ -129,7 +129,7 @@ spec:
                 toFieldPath: spec.forProvider.manifest.metadata.name
                 transforms:
                   - string:
-                      fmt: '%s-worload-identity-settings'
+                      fmt: '%s-workload-identity-settings'
                       type: Format
                     type: string
                 type: FromCompositeFieldPath
