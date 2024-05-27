@@ -16,6 +16,7 @@ spec:
     operators:
       externaldns:
         gcp:
+          enabled: true
           # To leverage external-dns for managing the spaces.dns.spacesRouterDomain zone entry,
           # substitute the placeholder values with your actual Managed Zone Name and GCP DNS Project Name.
           managedZoneName: ${data.gcpManagedZoneName}

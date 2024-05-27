@@ -65,6 +65,19 @@ spec:
                                 route53ZoneName:
                                   type: string
                                   description: "The Route53 zone name for external-dns to manage."
+                            gcp:
+                              type: object
+                              properties:
+                                enabled:
+                                  type: boolean
+                                  description: "Indicates if GCP external-dns is enabled."
+                                  default: true
+                                managedZoneName:
+                                  type: string
+                                  description: "The Managed Zone for external-dns to manage."
+                                dnsProjectName:
+                                  type: string
+                                  description: "The ID of the Project where the DNS is managed."
                             version:
                               type: string
                               description: "Specifies the version of external-dns to use."
