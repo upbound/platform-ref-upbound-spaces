@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: gcp.platform.upbound.io/v1alpha1
-    kind: XWORKLOADIDENTITY
+    kind: XWorkloadIdentity
   mode: Pipeline
   pipeline:
     - step: patch-and-transform
@@ -55,7 +55,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.parameters.GKEProjectID
+                    - fromFieldPath: status.worloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
                     - fromFieldPath: spec.parameters.serviceAccount.name
                 strategy: string
@@ -75,6 +75,11 @@ spec:
                 patchSetName: providerConfigRef
               - type: PatchSet
                 patchSetName: deletionPolicy
+              - fromFieldPath: status.atProvider.id
+                policy:
+                  fromFieldPath: Optional
+                toFieldPath: status.dnsSAID
+                type: ToCompositeFieldPath
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.id
                 toFieldPath: metadata.annotations[crossplane.io/external-name]
@@ -87,10 +92,49 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.parameters.GKEProjectID
+                    - fromFieldPath: status.worloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
                     - fromFieldPath: spec.parameters.serviceAccount.name
                 strategy: string
                 string:
                   fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
                 toFieldPath: spec.forProvider.member
+
+          - name: workloadIdentitySettings
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha1
+              kind: Object
+              spec:
+                deletionPolicy: Orphan
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      namespace: default
+                managementPolicy: Observe
+            patches:
+              - fromFieldPath: spec.parameters.id
+                toFieldPath: spec.providerConfigRef.name
+                type: FromCompositeFieldPath
+              - fromFieldPath: spec.parameters.id
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+                transforms:
+                  - string:
+                      fmt: '%s-worload-identity-settings'
+                      type: Format
+                    type: string
+                type: FromCompositeFieldPath
+              - fromFieldPath: spec.parameters.id
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                transforms:
+                  - string:
+                      fmt: '%s-worload-identity-settings'
+                      type: Format
+                    type: string
+                type: FromCompositeFieldPath
+              - fromFieldPath: status.atProvider.manifest.data.gkeProject
+                policy:
+                  fromFieldPath: Optional
+                toFieldPath: status.worloadIdentity.gkeProject
+                type: ToCompositeFieldPath

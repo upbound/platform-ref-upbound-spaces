@@ -10,7 +10,7 @@ spec:
     plural: workloadidentitys
   group: gcp.platform.upbound.io
   names:
-    kind: XWORKLOADIDENTITY
+    kind: XWorkloadIdentity
     plural: xworkloadidentitys
   versions:
     - name: v1alpha1

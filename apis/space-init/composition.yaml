@@ -445,7 +445,7 @@ spec:
               observed.composite.resource.spec.parameters.operators.externaldns.gcp.enabled == true
             base:
               apiVersion: gcp.platform.upbound.io/v1alpha1
-              kind: XWORKLOADIDENTITY
+              kind: XWorkloadIdentity
               spec:
                 parameters:
                   condition: StringEquals
@@ -456,15 +456,17 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.providerConfigName
                 toFieldPath: spec.parameters.id
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.dnsSAID
+                toFieldPath: status.externalDNS.dnsSAID
+                policy:
+                  fromFieldPath: Optional
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProjectName
                 toFieldPath: spec.parameters.project
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZoneName
                 toFieldPath: spec.parameters.managedZone
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.GKEprojectID
-                toFieldPath: spec.parameters.GKEProjectID
 
           - name: external-dns
             condition: |
@@ -508,11 +510,11 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZoneName
                 toFieldPath: spec.forProvider.values.domainFilters[0]
-              # - type: FromCompositeFieldPath
-              #   fromFieldPath: status.status.externalDNS.IRSARoleArn
-              #   toFieldPath: spec.forProvider.values.serviceAccount.annotations[eks.amazonaws.com/role-arn]
-              #   policy:
-              #     fromFieldPath: Required
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.externalDNS.dnsSAID
+                toFieldPath: spec.forProvider.values.serviceAccount.annotations[iam.gke.io/gcp-service-account]
+                policy:
+                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.uid
                 toFieldPath: spec.forProvider.values.txtOwnerId
