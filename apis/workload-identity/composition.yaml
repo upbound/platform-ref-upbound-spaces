@@ -55,7 +55,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: status.worloadIdentity.gkeProject
+                    - fromFieldPath: status.workloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
                     - fromFieldPath: spec.parameters.serviceAccount.name
                 strategy: string
@@ -92,7 +92,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: status.worloadIdentity.gkeProject
+                    - fromFieldPath: status.workloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
                     - fromFieldPath: spec.parameters.serviceAccount.name
                 strategy: string
@@ -136,5 +136,5 @@ spec:
               - fromFieldPath: status.atProvider.manifest.data.gkeProject
                 policy:
                   fromFieldPath: Optional
-                toFieldPath: status.worloadIdentity.gkeProject
+                toFieldPath: status.workloadIdentity.gkeProject
                 type: ToCompositeFieldPath
