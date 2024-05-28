@@ -54,13 +54,24 @@ spec:
                       required:
                         - name
                         - namespace
+                    condition:
+                      type: string
+                      description: This is the whether or not the equals is a hard match or like query
+                      default: StringEquals
+                      enum:
+                        - StringEquals
+                        - StringLike
+                    project:
+                      type: string
+                      description: The Project ID where the DNS managed zone lives.
+                    managedZone:
+                      type: string
+                      description: The name of the GCP managed zone.
                   required:
                     - id
-                    - gkeProject
-                    - knsName
-                    - ksaName
-                    - dnsProject
-                    - zoneName
+                    - serviceAccount
+                    - project
+                    - managedZone
               required:
                 - parameters
             status:

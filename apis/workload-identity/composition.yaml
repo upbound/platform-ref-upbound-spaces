@@ -40,6 +40,8 @@ spec:
                   role: roles/dns.reader
             patches:
               - type: PatchSet
+                patchSetName: Name
+              - type: PatchSet
                 patchSetName: providerConfigRef
               - type: PatchSet
                 patchSetName: deletionPolicy
@@ -52,16 +54,16 @@ spec:
               - fromFieldPath: spec.parameters.member
                 toFieldPath: spec.forProvider.member
                 type: FromCompositeFieldPath
-              - type: CombineFromComposite
-                combine:
+              - combine:
+                  strategy: string
+                  string:
+                    fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
                   variables:
                     - fromFieldPath: status.workloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
                     - fromFieldPath: spec.parameters.serviceAccount.name
-                strategy: string
-                string:
-                  fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
                 toFieldPath: spec.forProvider.member
+                type: CombineFromComposite
 
           - name: managedzoneiammember
             base:
@@ -89,16 +91,16 @@ spec:
               - fromFieldPath: spec.parameters.managedZone
                 toFieldPath: spec.forProvider.managedZone
                 type: FromCompositeFieldPath
-              - type: CombineFromComposite
-                combine:
+              - combine:
+                  strategy: string
+                  string:
+                    fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
                   variables:
                     - fromFieldPath: status.workloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
                     - fromFieldPath: spec.parameters.serviceAccount.name
-                strategy: string
-                string:
-                  fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
                 toFieldPath: spec.forProvider.member
+                type: CombineFromComposite
 
           - name: workloadIdentitySettings
             base:

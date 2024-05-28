@@ -458,14 +458,14 @@ spec:
                 toFieldPath: spec.parameters.id
               - type: ToCompositeFieldPath
                 fromFieldPath: status.dnsSAID
-                toFieldPath: status.externalDNS.dnsSAID
+                toFieldPath: status.status.externalDNS.dnsSAID
                 policy:
                   fromFieldPath: Optional
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProjectName
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProject
                 toFieldPath: spec.parameters.project
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZoneName
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZone
                 toFieldPath: spec.parameters.managedZone
 
           - name: external-dns
@@ -508,10 +508,10 @@ spec:
                 fromFieldPath: spec.parameters.operators.externaldns.version
                 toFieldPath: spec.forProvider.chart.version
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZoneName
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZone
                 toFieldPath: spec.forProvider.values.domainFilters[0]
               - type: FromCompositeFieldPath
-                fromFieldPath: status.externalDNS.dnsSAID
+                fromFieldPath: status.status.externalDNS.dnsSAID
                 toFieldPath: spec.forProvider.values.serviceAccount.annotations[iam.gke.io/gcp-service-account]
                 policy:
                   fromFieldPath: Required

@@ -205,10 +205,10 @@ spec:
                                   type: boolean
                                   description: "Indicates if GCP external-dns is enabled."
                                   default: true
-                                managedZoneName:
+                                managedZone:
                                   type: string
                                   description: "The Managed Zone for external-dns to manage."
-                                dnsProjectName:
+                                dnsProject:
                                   type: string
                                   description: "The ID of the Project where the DNS is managed."
                             version:
