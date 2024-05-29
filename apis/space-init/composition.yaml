@@ -456,17 +456,14 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.providerConfigName
                 toFieldPath: spec.parameters.id
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.dnsSAID
-                toFieldPath: status.status.externalDNS.dnsSAID
-                policy:
-                  fromFieldPath: Optional
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProject
-                toFieldPath: spec.parameters.project
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZone
-                toFieldPath: spec.parameters.managedZone
+                toFieldPath: spec.parameters.dnsProject
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.googleServiceAccount.email
+                toFieldPath: status.status.externalDNS.googleServiceAccount.email
+                policy:
+                  fromFieldPath: Optional
 
           - name: external-dns
             condition: |
@@ -484,10 +481,12 @@ spec:
                     repository: https://charts.bitnami.com/bitnami
                   values:
                     replicaCount: 1
-                    provider: gcp
+                    provider: google
                     policy: sync
                     source: ingress
                     registry: txt
+                    google:
+                      batchChangeSize: 4
                     rbac:
                       create: true
                     serviceAccount:
@@ -508,13 +507,16 @@ spec:
                 fromFieldPath: spec.parameters.operators.externaldns.version
                 toFieldPath: spec.forProvider.chart.version
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.operators.externaldns.gcp.managedZone
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.zoneName
                 toFieldPath: spec.forProvider.values.domainFilters[0]
               - type: FromCompositeFieldPath
-                fromFieldPath: status.status.externalDNS.dnsSAID
+                fromFieldPath: status.status.externalDNS.googleServiceAccount.email
                 toFieldPath: spec.forProvider.values.serviceAccount.annotations[iam.gke.io/gcp-service-account]
                 policy:
                   fromFieldPath: Required
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProject
+                toFieldPath: spec.forProvider.values.google.project
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.uid
                 toFieldPath: spec.forProvider.values.txtOwnerId

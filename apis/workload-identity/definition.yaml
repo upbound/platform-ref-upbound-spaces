@@ -61,17 +61,13 @@ spec:
                       enum:
                         - StringEquals
                         - StringLike
-                    project:
+                    dnsProject:
                       type: string
                       description: The Project ID where the DNS managed zone lives.
-                    managedZone:
-                      type: string
-                      description: The name of the GCP managed zone.
                   required:
                     - id
                     - serviceAccount
-                    - project
-                    - managedZone
+                    - dnsProject
               required:
                 - parameters
             status:
@@ -88,3 +84,16 @@ spec:
                   description: Freeform field containing information about the observed status.
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
+                googleServiceAccount:
+                  type: object
+                  description: Configuration for GSA
+                  properties:
+                    email:
+                      type: string
+                      description: email Google SA
+                    id:
+                      type: string
+                      description: id Google SA
+                  required:
+                    - email
+                    - id

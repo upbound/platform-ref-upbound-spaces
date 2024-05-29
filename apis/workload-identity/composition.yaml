@@ -31,13 +31,10 @@ spec:
                 toFieldPath: spec.deletionPolicy
                 type: FromCompositeFieldPath
         resources:
-          - name: projectiammember
+          - name: serviceaccount
             base:
               apiVersion: cloudplatform.gcp.upbound.io/v1beta1
-              kind: ProjectIAMMember
-              spec:
-                forProvider:
-                  role: roles/dns.reader
+              kind: ServiceAccount
             patches:
               - type: PatchSet
                 patchSetName: Name
@@ -45,19 +42,63 @@ spec:
                 patchSetName: providerConfigRef
               - type: PatchSet
                 patchSetName: deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.id
-                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - fromFieldPath: status.workloadIdentity.gkeProject
+                toFieldPath: spec.forProvider.project
+                type: FromCompositeFieldPath
+              - fromFieldPath: status.atProvider.email
+                toFieldPath: status.googleServiceAccount.email
+                type: ToCompositeFieldPath
+              - fromFieldPath: status.atProvider.id
+                toFieldPath: status.googleServiceAccount.id
+                type: ToCompositeFieldPath
+
+          - name: projectiammember-dns-admin
+            base:
+              apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+              kind: ProjectIAMMember
+              spec:
+                forProvider:
+                  role: roles/dns.admin
+            patches:
+              - type: PatchSet
+                patchSetName: Name
+              - type: PatchSet
+                patchSetName: providerConfigRef
+              - type: PatchSet
+                patchSetName: deletionPolicy
               - fromFieldPath: spec.parameters.dnsProject
                 toFieldPath: spec.forProvider.project
                 type: FromCompositeFieldPath
-              - fromFieldPath: spec.parameters.member
+              - fromFieldPath: status.googleServiceAccount.email
                 toFieldPath: spec.forProvider.member
+                type: FromCompositeFieldPath
+                transforms:
+                  - string:
+                      fmt: 'serviceAccount:%s'
+                      type: Format
+                    type: string
+
+          - name: serviceaccountiammember
+            base:
+              apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+              kind: ServiceAccountIAMMember
+              spec:
+                forProvider:
+                  role: roles/iam.workloadIdentityUser
+            patches:
+              - type: PatchSet
+                patchSetName: Name
+              - type: PatchSet
+                patchSetName: providerConfigRef
+              - type: PatchSet
+                patchSetName: deletionPolicy
+              - fromFieldPath: status.googleServiceAccount.id
+                toFieldPath: spec.forProvider.serviceAccountId
                 type: FromCompositeFieldPath
               - combine:
                   strategy: string
                   string:
-                    fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
+                    fmt: "serviceAccount:%s.svc.id.goog[%s/%s]"
                   variables:
                     - fromFieldPath: status.workloadIdentity.gkeProject
                     - fromFieldPath: spec.parameters.serviceAccount.namespace
@@ -65,42 +106,31 @@ spec:
                 toFieldPath: spec.forProvider.member
                 type: CombineFromComposite
 
-          - name: managedzoneiammember
+          - name: projectiammember-workload-identity-user
             base:
-              apiVersion: dns.gcp.upbound.io/v1beta1
-              kind: ManagedZoneIAMMember
+              apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+              kind: ProjectIAMMember
               spec:
                 forProvider:
-                  role: roles/dns.admin
+                  role: roles/iam.workloadIdentityUser
             patches:
+              - type: PatchSet
+                patchSetName: Name
               - type: PatchSet
                 patchSetName: providerConfigRef
               - type: PatchSet
                 patchSetName: deletionPolicy
-              - fromFieldPath: status.atProvider.id
-                policy:
-                  fromFieldPath: Optional
-                toFieldPath: status.dnsSAID
-                type: ToCompositeFieldPath
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.id
-                toFieldPath: metadata.annotations[crossplane.io/external-name]
-              - fromFieldPath: spec.parameters.dnsProject
+              - fromFieldPath: status.workloadIdentity.gkeProject
                 toFieldPath: spec.forProvider.project
                 type: FromCompositeFieldPath
-              - fromFieldPath: spec.parameters.managedZone
-                toFieldPath: spec.forProvider.managedZone
-                type: FromCompositeFieldPath
-              - combine:
-                  strategy: string
-                  string:
-                    fmt: "serviceAccount:%s.svc.id.goog/ns/%s/sa/%s"
-                  variables:
-                    - fromFieldPath: status.workloadIdentity.gkeProject
-                    - fromFieldPath: spec.parameters.serviceAccount.namespace
-                    - fromFieldPath: spec.parameters.serviceAccount.name
+              - fromFieldPath: status.googleServiceAccount.email
                 toFieldPath: spec.forProvider.member
-                type: CombineFromComposite
+                type: FromCompositeFieldPath
+                transforms:
+                  - string:
+                      fmt: 'serviceAccount:%s'
+                      type: Format
+                    type: string
 
           - name: workloadIdentitySettings
             base:

@@ -19,7 +19,7 @@ spec:
           enabled: true
           # To leverage external-dns for managing the spaces.dns.spacesRouterDomain zone entry,
           # substitute the placeholder values with your actual Managed Zone Name and GCP DNS Project Name.
-          managedZone: ${data.gcpManagedZoneName}
+          zoneName: ${data.gcpZoneName}
           dnsProject: ${data.gcpDNSProject}
       crossplane:
         providers:
@@ -31,7 +31,7 @@ spec:
             localRbac: true
       argocd:
         enabled: true
-        ingressUrl: argocd-platform-ref-upbound-spaces.${data.gcpDNSName}
+        ingressUrl: argocd-platform-ref-upbound-spaces.${data.gcpZoneName}
         git:
           url: https://github.com/upbound/platform-ref-upbound-spaces.git
           path: gitops
@@ -62,7 +62,7 @@ spec:
             - "*/controlplane-*"
     spaces:
       dns:
-        spacesRouterDomain: platform-ref-upbound-spaces-gke.${data.gcpDNSName}
+        spacesRouterDomain: platform-ref-upbound-spaces-gke.${data.gcpZoneName}
       clusterType: gke
       account: platform-ref
   writeConnectionSecretToRef:
