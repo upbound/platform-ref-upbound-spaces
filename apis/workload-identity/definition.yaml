@@ -77,9 +77,6 @@ spec:
                   description: Freeform field containing status information for Workload Identity.
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
-                member:
-                  description: The member string used in IAM policies.
-                  type: string
                 observed:
                   description: Freeform field containing information about the observed status.
                   type: object
