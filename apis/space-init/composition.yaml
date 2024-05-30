@@ -305,8 +305,6 @@ spec:
                     name: ingress-nginx
                     repository: https://kubernetes.github.io/ingress-nginx
                   set:
-                    - name: "nameOverride"
-                      value: "ingress-nginx"
                     - name: "controller.service.type"
                       value: "LoadBalancer"
                     - name: "controller.allowSnippetAnnotations"
