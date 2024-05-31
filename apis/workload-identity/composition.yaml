@@ -144,7 +144,7 @@ spec:
                     kind: ConfigMap
                     metadata:
                       namespace: default
-                managementPolicy: Observe
+                managementPolicies: ["Observe"]
             patches:
               - fromFieldPath: spec.parameters.id
                 toFieldPath: spec.providerConfigRef.name

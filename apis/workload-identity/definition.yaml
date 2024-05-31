@@ -1,17 +1,17 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xworkloadidentitys.gcp.platform.upbound.io
+  name: xworkloadidentities.gcp.platform.upbound.io
   labels:
     provider: gcp
 spec:
   claimNames:
     kind: WorkloadIdentity
-    plural: workloadidentitys
+    plural: workloadidentities
   group: gcp.platform.upbound.io
   names:
     kind: XWorkloadIdentity
-    plural: xworkloadidentitys
+    plural: xworkloadidentities
   versions:
     - name: v1alpha1
       served: true
