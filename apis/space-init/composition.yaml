@@ -436,6 +436,94 @@ spec:
                       type: Format
                     type: string
 
+          - name: external-dns-workloadidentity
+            condition: |
+              "externaldns" in observed.composite.resource.spec.parameters.operators &&
+              "gcp" in observed.composite.resource.spec.parameters.operators.externaldns &&
+              observed.composite.resource.spec.parameters.operators.externaldns.gcp.enabled == true
+            base:
+              apiVersion: gcp.platform.upbound.io/v1alpha1
+              kind: XWorkloadIdentity
+              spec:
+                parameters:
+                  condition: StringEquals
+                  serviceAccount:
+                    name: external-dns
+                    namespace: external-dns
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigName
+                toFieldPath: spec.parameters.id
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProject
+                toFieldPath: spec.parameters.dnsProject
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.googleServiceAccount.email
+                toFieldPath: status.status.externalDNS.googleServiceAccount.email
+                policy:
+                  fromFieldPath: Optional
+
+          - name: external-dns
+            condition: |
+              "externaldns" in observed.composite.resource.spec.parameters.operators &&
+              "gcp" in observed.composite.resource.spec.parameters.operators.externaldns &&
+              observed.composite.resource.spec.parameters.operators.externaldns.gcp.enabled == true
+            base:
+              apiVersion: helm.crossplane.io/v1beta1
+              kind: Release
+              spec:
+                forProvider:
+                  namespace: external-dns
+                  chart:
+                    name: external-dns
+                    repository: https://charts.bitnami.com/bitnami
+                  values:
+                    replicaCount: 1
+                    provider: google
+                    policy: sync
+                    source: ingress
+                    registry: txt
+                    google:
+                      batchChangeSize: 4
+                    rbac:
+                      create: true
+                    serviceAccount:
+                      create: true
+                      name: external-dns
+                    metrics:
+                      enabled: false
+                      serviceMonitor:
+                        enabled: false
+                    replicas: 2
+                    podDisruptionBudget:
+                      minAvailable: 1
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigName
+                toFieldPath: spec.providerConfigRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.externaldns.version
+                toFieldPath: spec.forProvider.chart.version
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.zoneName
+                toFieldPath: spec.forProvider.values.domainFilters[0]
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.status.externalDNS.googleServiceAccount.email
+                toFieldPath: spec.forProvider.values.serviceAccount.annotations[iam.gke.io/gcp-service-account]
+                policy:
+                  fromFieldPath: Required
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.externaldns.gcp.dnsProject
+                toFieldPath: spec.forProvider.values.google.project
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: spec.forProvider.values.txtOwnerId
+                transforms:
+                  - string:
+                      fmt: 'upbound-spaces-%s'
+                      type: Format
+                    type: string
+
           - name: universal-crossplane
             condition: observed.composite.resource.spec.parameters.operators.crossplane.enabled == true
             base:
