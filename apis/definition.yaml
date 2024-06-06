@@ -96,7 +96,6 @@ spec:
                       description: "Defines the operators to be deployed with their enabled status and versions."
                       default:
                         certmanager:
-                          enabled: true
                           version: "v1.14.3"
                         ingressnginx:
                           enabled: true
@@ -150,20 +149,37 @@ spec:
                                 - ref
                         certmanager:
                           type: object
-                          default:
-                            enabled: true
-                            version: "v1.14.3"
                           properties:
-                            enabled:
-                              type: boolean
-                              description: "Indicates if cert-manager is enabled."
-                              default: true
+                            aws:
+                              type: object
+                              properties:
+                                enabled:
+                                  type: boolean
+                                  description: "Indicates if AWS external-dns is enabled."
+                                route53ZoneId:
+                                  type: string
+                                  description: "The Route53 zone ID for external-dns to manage."
+                                route53ZoneName:
+                                  type: string
+                                  description: "The Route53 zone name for external-dns to manage."
+                            gcp:
+                              type: object
+                              properties:
+                                enabled:
+                                  type: boolean
+                                  description: "Indicates if GCP external-dns is enabled."
+                                  default: true
+                                zoneName:
+                                  type: string
+                                  description: "The Managed Zone for external-dns to manage."
+                                dnsProject:
+                                  type: string
+                                  description: "The ID of the Project where the DNS is managed."
                             version:
                               type: string
                               description: "Specifies the version of cert-manager to use."
                               default: "v1.14.3"
                           required:
-                            - enabled
                             - version
                         ingressnginx:
                           type: object

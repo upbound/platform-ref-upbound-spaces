@@ -270,7 +270,12 @@ spec:
                 toFieldPath: spec.providerConfigRef.name
 
           - name: cert-manager
-            condition: observed.composite.resource.spec.parameters.operators.certmanager.enabled == true
+            condition: |
+              "certmanager" in observed.composite.resource.spec.parameters.operators &&
+              (("aws" in observed.composite.resource.spec.parameters.operators.certmanager &&
+              observed.composite.resource.spec.parameters.operators.certmanager.aws.enabled == true) ||
+              ("azure" in observed.composite.resource.spec.parameters.operators.certmanager &&
+              observed.composite.resource.spec.parameters.operators.certmanager.azure.enabled == true))
             base:
               apiVersion: helm.crossplane.io/v1beta1
               kind: Release
@@ -283,6 +288,9 @@ spec:
                     repository: https://charts.jetstack.io
                   values:
                     installCRDs: true
+                    serviceAccount:
+                      create: true
+                      name: cert-manager
                   waitTimeout: "360s"
             patches:
               - type: FromCompositeFieldPath
@@ -291,6 +299,67 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.operators.certmanager.version
                 toFieldPath: spec.forProvider.chart.version
+
+          - name: cert-manager-workloadidentity
+            condition: |
+              "certmanager" in observed.composite.resource.spec.parameters.operators &&
+              "gcp" in observed.composite.resource.spec.parameters.operators.certmanager &&
+              observed.composite.resource.spec.parameters.operators.certmanager.gcp.enabled == true
+            base:
+              apiVersion: gcp.platform.upbound.io/v1alpha1
+              kind: XWorkloadIdentity
+              spec:
+                parameters:
+                  condition: StringEquals
+                  serviceAccount:
+                    name: cert-manager
+                    namespace: cert-manager
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigName
+                toFieldPath: spec.parameters.id
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.certmanager.gcp.dnsProject
+                toFieldPath: spec.parameters.dnsProject
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.googleServiceAccount.email
+                toFieldPath: status.status.certmanager.googleServiceAccount.email
+                policy:
+                  fromFieldPath: Optional
+
+          - name: cert-manager
+            condition: |
+              "certmanager" in observed.composite.resource.spec.parameters.operators &&
+              "gcp" in observed.composite.resource.spec.parameters.operators.certmanager &&
+              observed.composite.resource.spec.parameters.operators.certmanager.gcp.enabled == true
+            base:
+              apiVersion: helm.crossplane.io/v1beta1
+              kind: Release
+              spec:
+                rollbackLimit: 3
+                forProvider:
+                  namespace: cert-manager
+                  chart:
+                    name: cert-manager
+                    repository: https://charts.jetstack.io
+                  values:
+                    installCRDs: true
+                    serviceAccount:
+                      create: true
+                      name: cert-manager
+                    extraArgs:
+                      - --issuer-ambient-credentials
+                  waitTimeout: "360s"
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigName
+                toFieldPath: spec.providerConfigRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.operators.certmanager.version
+                toFieldPath: spec.forProvider.chart.version
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.status.certmanager.googleServiceAccount.email
+                toFieldPath: spec.forProvider.values.serviceAccount.annotations[iam.gke.io/gcp-service-account]
 
           - name: ingress-nginx
             condition: observed.composite.resource.spec.parameters.operators.ingressnginx.enabled == true

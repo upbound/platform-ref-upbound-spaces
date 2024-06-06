@@ -10,7 +10,8 @@ spec:
     providerConfigName: aws-spaces-hostcluster
     operators:
       certmanager:
-        enabled: true
+        aws:
+          enabled: true
         version: v1.14.3
       ingressnginx:
         enabled: true

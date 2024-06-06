@@ -14,6 +14,11 @@ spec:
       count: 3
       instanceType: e2-standard-4
     operators:
+      certmanager:
+        gcp:
+          enabled: true
+          zoneName: ${data.gcpZoneName}
+          dnsProject: ${data.gcpDNSProject}
       externaldns:
         gcp:
           enabled: true
