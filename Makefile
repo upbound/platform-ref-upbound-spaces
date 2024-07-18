@@ -23,7 +23,7 @@ UPTEST_VERSION = v0.11.1
 # certain conventions such as the default examples root or package directory.
 XPKG_DIR = $(shell pwd)
 XPKG_EXAMPLES_DIR = .up/examples
-XPKG_IGNORE = .github/workflows/*.yml,.github/workflows/*.yaml,init/*.yaml,examples/*.yaml,.work/uptest-datasource.yaml,examples/**/*.yaml,gitops/*.yaml
+XPKG_IGNORE = .github/workflows/*.yml,.github/workflows/*.yaml,init/*.yaml,examples/*.yaml,.work/uptest-datasource.yaml,examples/**/*.yaml,gitops/*.yaml,apis/template.yaml
 
 XPKG_REG_ORGS ?= xpkg.upbound.io/upbound
 # NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are

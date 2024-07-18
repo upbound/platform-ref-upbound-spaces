@@ -58,23 +58,17 @@ spec:
                         userArn:
                           description: The IAM User ARN to connect as ClusterAdmin.
                           type: string
-                    networkSelector:
-                      type: string
-                      description: NetworkSelector employs a specific type of network architecture.
-                      enum:
-                        - basic
-                      default: basic
                     deletionPolicy:
                       description: Delete the external resources when the Claim/XR is deleted. Defaults to Delete
                       enum:
                         - Delete
                         - Orphan
                       type: string
-                      default: Delete
+                      default: "Delete"
                     providerConfigName:
                       description: Crossplane ProviderConfig to use for provisioning this resources
                       type: string
-                      default: default
+                      default: "default"
                     version:
                       type: string
                       description: Kubernetes version of the Cluster
@@ -97,16 +91,8 @@ spec:
                       default:
                         certmanager:
                           enabled: true
-                          version: "v1.14.3"
                         ingressnginx:
                           enabled: true
-                          version: "4.9.1"
-                        externaldns:
-                          version: "6.34.2"
-                        crossplane:
-                          enabled: true
-                          version: "v1.15.2-up.1"
-                          providers: []
                       properties:
                         argocd:
                           type: object
@@ -118,7 +104,6 @@ spec:
                             version:
                               type: string
                               description: "Specifies the version of argocd helm-chart to use."
-                              default: "5.51.1"
                             ingressUrl:
                               type: string
                               description: set ingressUrl for argocd server
@@ -152,7 +137,6 @@ spec:
                           type: object
                           default:
                             enabled: true
-                            version: "v1.14.3"
                           properties:
                             enabled:
                               type: boolean
@@ -161,15 +145,12 @@ spec:
                             version:
                               type: string
                               description: "Specifies the version of cert-manager to use."
-                              default: "v1.14.3"
                           required:
                             - enabled
-                            - version
                         ingressnginx:
                           type: object
                           default:
                             enabled: true
-                            version: "4.9.1"
                           properties:
                             enabled:
                               type: boolean
@@ -178,99 +159,33 @@ spec:
                             version:
                               type: string
                               description: "Specifies the version of ingress-nginx to use."
-                              default: "4.9.1"
                           required:
                             - enabled
-                            - version
                         externaldns:
                           type: object
                           properties:
-                            aws:
-                              type: object
-                              properties:
-                                enabled:
-                                  type: boolean
-                                  description: "Indicates if AWS external-dns is enabled."
-                                  default: true
-                                route53ZoneId:
-                                  type: string
-                                  description: "The Route53 zone ID for external-dns to manage."
-                                route53ZoneName:
-                                  type: string
-                                  description: "The Route53 zone name for external-dns to manage."
-                            gcp:
-                              type: object
-                              properties:
-                                enabled:
-                                  type: boolean
-                                  description: "Indicates if GCP external-dns is enabled."
-                                  default: true
-                                zoneName:
-                                  type: string
-                                  description: "The Managed Zone for external-dns to manage."
-                                dnsProject:
-                                  type: string
-                                  description: "The ID of the Project where the DNS is managed."
+                            enabled:
+                              type: boolean
+                              description: "Indicates if external-dns is enabled."
+                              default: true
+                            id:
+                              type: string
+                            name:
+                              type: string
                             version:
                               type: string
                               description: "Specifies the version of external-dns to use."
                               default: "6.34.2"
                           required:
                             - version
-                        crossplane:
-                          type: object
-                          default:
-                            enabled: true
-                            version: "v1.15.2-up.1"
-                            providers: []
-                          properties:
-                            enabled:
-                              type: boolean
-                              description: "Indicates if Crossplane is enabled."
-                              default: true
-                            version:
-                              type: string
-                              description: "Specifies the version of Crossplane to use."
-                              default: "v1.15.2-up.1"
-                            providers:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                    description: "The name of the Crossplane provider."
-                                  package:
-                                    type: string
-                                    description: "The package of the Crossplane provider."
-                                  enabled:
-                                    type: boolean
-                                    description: "Indicates if the Crossplane provider is enabled."
-                                    default: true
-                                  localRbac:
-                                    type: boolean
-                                    description: "Indicates if local RBAC is enabled for the provider."
-                          required:
                             - enabled
-                            - version
-                            - providers
                     spaces:
                       type: object
                       description: "Defines the configuration for spaces."
-                      default:
-                        version: "1.3.0"
-                        account: ""
-                        clusterType: ""
-                        dns:
-                          spacesRouterDomain: ""
-                        pullSecretRef:
-                          name: upbound-provider-helm-pull
-                          namespace: upbound-system
                       properties:
                         version:
                           type: string
                           description: "The version of the space configuration."
-                          default: "1.3.0"
                         dns:
                           type: object
                           properties:
@@ -282,32 +197,21 @@ spec:
                         account:
                           type: string
                           description: "The account identifier for the space."
-                        clusterType:
-                          type: string
-                          description: "The type of cluster to deploy for the space."
                         pullSecretRef:
                           type: object
-                          default:
-                            name: upbound-provider-helm-pull
-                            namespace: upbound-system
                           properties:
                             name:
                               type: string
                               description: "The name of the pull secret to use."
-                              default: upbound-provider-helm-pull
                             namespace:
                               type: string
                               description: "The namespace of the pull secret."
-                              default: upbound-system
                           required:
                             - name
                             - namespace
                       required:
-                        - version
                         - dns
                         - account
-                        - clusterType
-                        - pullSecretRef
                   required:
                     - cloud
                     - deletionPolicy

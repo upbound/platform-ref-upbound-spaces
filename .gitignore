@@ -8,3 +8,5 @@ init
 *.xpkg
 kubeconfig
 examples/datasource.yaml
+/apis/composition.yaml
+/apis/.kclvm
