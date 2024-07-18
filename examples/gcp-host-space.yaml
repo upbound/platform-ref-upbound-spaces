@@ -15,20 +15,10 @@ spec:
       instanceType: e2-standard-4
     operators:
       externaldns:
-        gcp:
-          enabled: true
-          # To leverage external-dns for managing the spaces.dns.spacesRouterDomain zone entry,
-          # substitute the placeholder values with your actual Managed Zone Name and GCP DNS Project Name.
-          zoneName: ${data.gcpZoneName}
-          dnsProject: ${data.gcpDNSProject}
-      crossplane:
-        providers:
-          - name: provider-helm
-            package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0
-            localRbac: true
-          - name: provider-kubernetes
-            package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.12.1
-            localRbac: true
+        # To leverage external-dns for managing the spaces.dns.spacesRouterDomain zone entry,
+        # substitute the placeholder values with your actual Managed Zone Name and GCP DNS Project Name.
+        name: ${data.gcpZoneName}
+        id: ${data.gcpDNSProject}
       argocd:
         enabled: true
         ingressUrl: argocd-platform-ref-upbound-spaces.${data.gcpZoneName}
@@ -63,7 +53,6 @@ spec:
     spaces:
       dns:
         spacesRouterDomain: platform-ref-upbound-spaces-gke.${data.gcpZoneName}
-      clusterType: gke
       account: platform-ref
   writeConnectionSecretToRef:
     name: hostcluster-gcp-kubeconfig

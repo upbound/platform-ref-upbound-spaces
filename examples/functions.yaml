@@ -1,27 +1,6 @@
 apiVersion: pkg.crossplane.io/v1beta1
 kind: Function
 metadata:
-  name: upboundcare-function-conditional-patch-and-transform
-spec:
-  package: xpkg.upbound.io/upboundcare/function-conditional-patch-and-transform:v0.4.0
----
-apiVersion: pkg.crossplane.io/v1beta1
-kind: Function
-metadata:
-  name: crossplane-contrib-function-patch-and-transform
-spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.3.0
----
-apiVersion: pkg.crossplane.io/v1beta1
-kind: Function
-metadata:
-  name: crossplane-contrib-function-go-templating
-spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.4.1
----
-apiVersion: pkg.crossplane.io/v1beta1
-kind: Function
-metadata:
   name: crossplane-contrib-function-auto-ready
 spec:
   package: xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.2.1
@@ -29,6 +8,6 @@ spec:
 apiVersion: pkg.crossplane.io/v1beta1
 kind: Function
 metadata:
-  name: crossplane-contrib-function-sequencer
+  name: crossplane-contrib-function-kcl
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-sequencer:v0.1.0
+  package: xpkg.upbound.io/crossplane-contrib/function-kcl:v0.9.0

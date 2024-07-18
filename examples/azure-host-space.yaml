@@ -14,14 +14,6 @@ spec:
       count: 1
       instanceType: standard_d8s_v3
     operators:
-      crossplane:
-        providers:
-          - name: provider-helm
-            package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0
-            localRbac: true
-          - name: provider-kubernetes
-            package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.12.1
-            localRbac: true
       argocd:
         enabled: true
         ingressUrl: argocd-platform-ref-upbound-spaces.${data.route53ZoneName}
@@ -56,7 +48,6 @@ spec:
     spaces:
       dns:
         spacesRouterDomain: platform-ref-upbound-spaces-aks.${data.route53ZoneName}
-      clusterType: aks
       account: platform-ref
   writeConnectionSecretToRef:
     name: hostcluster-aks-kubeconfig
