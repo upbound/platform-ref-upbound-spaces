@@ -446,7 +446,6 @@ spec:
               kind: XWorkloadIdentity
               spec:
                 parameters:
-                  condition: StringEquals
                   serviceAccount:
                     name: external-dns
                     namespace: external-dns
