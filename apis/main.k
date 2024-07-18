@@ -1,90 +1,89 @@
+import regex
+
 oxr = option("params").oxr
 _ocds = option("params").ocds
 _dxr = option("params").dxr
 dcds = option("params").dcds
 
-_defaults = {
-    id: oxr.spec.parameters.id or ""
-    region: oxr.spec.parameters.region or ""
-    deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
-    providerConfigName: oxr.spec.providerConfigName or "default"
+_metadata = lambda name: str -> any {
+    { annotations = { "krm.kcl.dev/composition-resource-name" = name }}
 }
 
-AWSNetwork = {
+get = lambda x: any, y: str, d: any -> any {
+    """
+    Get an item from a dictionary using a dot separated path.
+    If the item is not found, return a default value.
+    """
+    p = regex.split(y, "\.")
+    c = p[0]
+    y = ".".join(p[1:])
+    x[c] if len(p) == 1 and c in x else d if c not in x else get(x[c], y, d)
+}
+
+_defaults = {
+    id: get(oxr, "spec.parameters.id", "")
+    region: get(oxr, "spec.parameters.region", "")
+    deletionPolicy: get(oxr, "spec.parameters.deletionPolicy", "Delete")
+    providerConfigName: get(oxr, "spec.providerConfigName", "default")
+}
+
+_items = [{
     apiVersion: "aws.platform.upbound.io/v1alpha1"
     kind: "XNetwork"
-    metadata: {
-        annotations: {
-            "krm.kcl.dev/composition-resource-name" = "network"
-        }
-    }
-    spec: {
-        parameters: _defaults
-    }
-} if oxr.spec.parameters.cloud or "" == "aws" else {}
+    metadata: _metadata("network")
+    spec.parameters: _defaults
+} if get(oxr, "spec.parameters.cloud", "") == "aws" else {} ]
 
-AWSKubernetes = {
+_items += [{
     apiVersion: "aws.platform.upbound.io/v1alpha1"
     kind: "XEKS"
-    metadata: {
+    metadata: _metadata("kubernetes") | {
         annotations: {
-            "krm.kcl.dev/composition-resource-name" = "kubernetes"
-            "xeks.aws.platform.upbound.io/cluster-id" = oxr.spec.parameters.id or ""
+            "xeks.aws.platform.upbound.io/cluster-id" = get(oxr, "spec.parameters.id", "")
         }
     }
     spec: {
         parameters: _defaults | {
-            version: oxr.spec.parameters.version or ""
-            nodes: oxr.spec.parameters.nodes or ""
-            iam: oxr.spec.parameters.iam or ""
+            version: get(oxr, "spec.parameters.version", "")
+            nodes: get(oxr, "spec.parameters.nodes", "")
+            iam: get(oxr, "spec.parameters.iam", "")
         }
         writeConnectionSecretToRef: {
-            name: oxr.metadata.uid and "-eks"
-            namespace: oxr.spec.writeConnectionSecretToRef.namespace
+            name: get(oxr, "metadata.uid", "") + "-ekscluster"
+            namespace: get(oxr, "spec.writeConnectionSecretToRef.namespace", "")
         }
     }
-} if oxr.spec.parameters.cloud == "aws" else {}
+} if get(oxr, "spec.parameters.cloud", "") == "aws" else {} ]
 
-xArgoCd = {
+_items += [{
     apiVersion: "gitops.platform.upbound.io/v1alpha1"
     kind: "XArgo"
-    metadata: {
-        annotations: {
-            "krm.kcl.dev/composition-resource-name" = "argocd"
-        }
-    }
+    metadata: _metadata("argocd")
     spec:{
         parameters: {
-            deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
-            providerConfigName: oxr.spec.parameters.id
-            ingressUrl: oxr.spec.parameters.operators.argocd.ingressUrl
+            deletionPolicy: get(oxr, "spec.parameters.deletionPolicy", "Delete")
+            providerConfigName: get(oxr, "spec.parameters.id", "")
+            ingressUrl: get(oxr, "spec.parameters.operators.argocd.ingressUrl", "")
             operators: {
                 argocd: {
-                    version: oxr.spec.parameters.operators.argocd.version or "7.1.1"
+                    version: get(oxr, "spec.parameters.operators.argocd.version", "7.1.1")
                 }
             }
             source: {
-                git: oxr.spec.parameters.operators.argocd.git
+                git: get(oxr, "spec.parameters.operators.argocd.git", "")
             },
-            resourceExclusions: oxr.spec.parameters.operators.argocd.resourceExclusions
-            resourceInclusions: oxr.spec.parameters.operators.argocd.resourceInclusions
+            resourceExclusions: get(oxr, "spec.parameters.operators.argocd.resourceExclusions", "")
+            resourceInclusions: get(oxr, "spec.parameters.operators.argocd.resourceInclusions", "")
         },
     }
-} if all_true([
-    oxr.spec.parameters.operators.argocd.enabled or False
-    all_true([
-        c.status == "True" for c in _ocds["kubernetes"]?.Resource.status.conditions or False
-    ])
-]) else {}
+} if get(_ocds, "kubernetes.Resource", {}) and get(oxr, "spec.parameters.operators.argocd.enabled", "") and all_true([
+    c.status == "True" for c in get(_ocds, "kubernetes.Resource.status.conditions", [])
+]) else {} ]
 
-usageByArgoCDOfXEKS = {
+_items += [{
     apiVersion: "apiextensions.crossplane.io/v1alpha1"
     kind: "Usage"
-    metadata: {
-        annotations: {
-            "krm.kcl.dev/composition-resource-name" = "usage-by-argocd-of-kubernetes"
-        }
-    }
+    metadata: _metadata("usage-by-argocd-of-kubernetes")
     spec: {
         by: {
             apiVersion: "gitops.platform.upbound.io/v1alpha1"
@@ -94,28 +93,22 @@ usageByArgoCDOfXEKS = {
             },
         },
         of: {
-            apiVersion: "aws.platform.upbound.io/v1alpha1"
-            kind: "XEKS"
+
+            apiVersion: get(_ocds, "kubernetes.Resource.apiVersion", "")
+            kind: get(_ocds, "kubernetes.Resource.kind", "")
             resourceSelector: {
                 matchControllerRef: True
             },
         },
     },
-} if all_true([
-    oxr.spec.parameters.operators.argocd.enabled or False
-    all_true([
-        c.status == "True" for c in _ocds["kubernetes"]?.Resource.status.conditions or False
-    ])
-]) else {}
+} if get(_ocds, "kubernetes.Resource", {}) and get(oxr, "spec.parameters.operators.argocd.enabled", "") and all_true([
+    c.status == "True" for c in get(_ocds, "kubernetes.Resource.status.conditions", [])
+]) else {} ]
 
-spacePullSecret = {
+_items += [{
     apiVersion: "kubernetes.crossplane.io/v1alpha2"
     kind: "Object"
-    metadata: {
-        annotations: {
-            "krm.kcl.dev/composition-resource-name" = "space-pull-secret"
-        }
-    }
+    metadata: _metadata("space-pull-secret")
     spec: {
         references: [
             {
@@ -129,7 +122,7 @@ spacePullSecret = {
                 toFieldPath: "data[.dockerconfigjson]"
             },
         ],
-        deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
+        deletionPolicy: get(oxr, "spec.parameters.deletionPolicy", "Delete")
         forProvider: {
             manifest: {
                 "apiVersion": "v1",
@@ -141,62 +134,58 @@ spacePullSecret = {
                 },
             },
         },
-        providerConfigRef: {
-            name: oxr.spec.parameters.providerConfigName or "default"
-        },
+        providerConfigRef.name: get(oxr, "spec.parameters.id", "")
     },
-} if all_true([
-    all_true([
-        c.status == "True" for c in _ocds["kubernetes"]?.Resource.status.conditions or False
-    ])
-]) else {}
+} if get(_ocds, "kubernetes.Resource", {}) and all_true([
+    c.status == "True" for c in get(_ocds, "kubernetes.Resource.status.conditions", [])
+]) else {} ]
 
-releaseCertManager = {
-    apiVersion: "helm.crossplane.io/v1beta1l"
+_items += [{
+    apiVersion: "helm.crossplane.io/v1beta1"
     kind: "Release"
-    metadata: {
+    metadata: _metadata("cert-manager")  | {
         annotations: {
-            "crossplane.io/external-name": "cert-manager"
+            "crossplane.io/external-name" = "cert-manager"
         }
-    },
+    }
     spec: {
         rollbackLimit: 3,
-        deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
+        deletionPolicy: get(oxr, "spec.parameters.deletionPolicy", "Delete")
         forProvider: {
             namespace: "cert-manager",
             chart: {
                 name: "cert-manager",
-                version: oxr.spec.parameters.operators.certmanager.version or "v1.14.3"
-                repository: "https://charts.jetstack.io"
+                version: get(oxr, "spec.parameters.operators.certmanager.version", "v1.14.3")
+                repository: get(oxr, "", "https://charts.jetstack.io")
             },
             values: {
                 installCRDs: True,
             },
             waitTimeout: "360s"
         },
-        providerConfigRef: {
-            name: oxr.spec.parameters.providerConfigName or "default"
-        },
+        providerConfigRef.name: get(oxr, "spec.parameters.id", "")
     },
-} if oxr.spec.parameters.operators.certmanager.enabled or True == True else {}
+} if get(_ocds, "kubernetes.Resource", {}) and all_true([
+    c.status == "True" for c in get(_ocds, "kubernetes.Resource.status.conditions", [])
+]) else {} ]
 
-releaseIngressNginx = {
+_items += [{
     apiVersion: "helm.crossplane.io/v1beta1"
     kind: "Release"
-    metadata: {
+    metadata: _metadata("ingress-nginx")  | {
         annotations: {
-            "crossplane.io/external-name": "ingress-nginx"
+            "crossplane.io/external-name" = "ingress-nginx"
         }
-    },
+    }
     spec: {
         rollbackLimit: 3,
-        deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
+        deletionPolicy: get(oxr, "spec.parameters.deletionPolicy", "Delete")
         forProvider: {
             namespace: "ingress-nginx"
             chart: {
                 name: "ingress-nginx"
-                version: oxr.spec.parameters.operators.ingressnginx.version or "4.9.1"
-                repository: "https://kubernetes.github.io/ingress-nginx"
+                version: get(oxr, "spec.parameters.operators.ingressnginx.version", "4.9.1")
+                repository: get(oxr, "", "https://kubernetes.github.io/ingress-nginx")
             }
             set: [
                 {
@@ -207,190 +196,209 @@ releaseIngressNginx = {
                     name: "controller.allowSnippetAnnotations",
                     value: "true"
                 },
-                {
-                    name: 'controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"'
-                    value: "/healthz"
-                },
+                if get(oxr, "spec.parameters.cloud", "") == "aws":
+                    {
+                        name: 'controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"'
+                        value: "/external"
+                    },
+                    {
+                        name: 'controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-scheme"'
+                        value: "internet-facing"
+                    },
+                    {
+                        name: 'controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-nlb-target-type"'
+                        value: "ip"
+                    },
+                    {
+                        name: 'controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-protocol"'
+                        value: "http"
+                    },
+                    {
+                        name: 'controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-path"'
+                        value: "/healthz"
+                    },
+                    {
+                        name: 'controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-port"'
+                        value: "10254"
+                    }
             ],
         },
-        providerConfigRef: {
-            name: oxr.spec.parameters.providerConfigName or "default"
-        },
+        providerConfigRef.name: get(oxr, "spec.parameters.id", "")
     },
-} if oxr.spec.parameters.operators.ingressnginx.enabled or True == True else {}
+} if get(_ocds, "kubernetes.Resource", {}) and all_true([
+    c.status == "True" for c in get(_ocds, "kubernetes.Resource.status.conditions", [])
+]) else {} ]
 
-releaseExternalDns = {
+# releaseExternalDns = {
+#     apiVersion: "helm.crossplane.io/v1beta1"
+#     kind: "Release"
+#     metadata: {
+#         annotations: {
+#             "crossplane.io/external-name": "external-dns"
+#         }
+#     },
+#     spec: {
+#         rollbackLimit: 3,
+#         deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
+#         forProvider: {
+#             namespace: "external-dns"
+#             chart: {
+#                 name: "external-dns"
+#                 version: oxr.spec.parameters.operators.externaldns.version or "6.34.2"
+#                 repository: "https://charts.bitnami.com/bitnami"
+#             },
+#             values: {
+#                 replicaCount: 1
+#                 domainFilters: [
+#                     oxr.spec.parameters.operators.externaldns.name
+#                 ],
+#                 serviceAccount: {
+#                     annotations: [
+#                         if oxr.spec.parameters.cloud == "aws":
+#                             {
+#                                 "eks.amazonaws.com/role-arn": oxr.status.status.externalDNS.IRSARoleArn
+#                             },
+#                         if oxr.spec.parameters.cloud == "gcp":
+#                             {
+#                                 "iam.gke.io/gcp-service-account": oxr.status.status.externalDNS.googleServiceAccount.email
+#                             },
+#                     ],
+#                 },
+#                 txtOwnerId: "upbound-spaces-" + oxr.metadata.uid
+#                 provider: oxr.spec.parameters.cloud
+#                 policy: "sync"
+#                 source: "ingress"
+#                 registry: "txt"
+#                 if oxr.spec.parameters.cloud == "aws":
+#                     aws: {
+#                         batchChangeSize: 4
+#                         zoneType: "public"
+#                         region: "us-east-1"
+#                     },
+#                 if oxr.spec.parameters.cloud == "gcp":
+#                     google: {
+#                         project: oxr.spec.parameters.operators.externaldns.gcp.dnsProject
+#                     }
+#                 rbac: {
+#                     create: True
+#                 },
+#                 serviceAccount: {
+#                     create: True
+#                     name: "external-dns"
+#                 },
+#                 metrics: {
+#                     enabled: False
+#                     serviceMonitor: {
+#                         enabled: False
+#                     },
+#                 },
+#                 replicas: 2
+#                 podDisruptionBudget: {
+#                     minAvailable: 1
+#                 },
+#             },
+
+#         },
+#         providerConfigRef: {
+#             name: oxr.spec.parameters.providerConfigName or "default"
+#         },
+#     }
+# }
+
+# if oxr.spec.parameters.cloud == "aws":
+#     _identityExternalDNS = {
+#         apiVersion: "aws.platform.upbound.io/v1alpha1"
+#         kind: "XIRSA"
+#         spec: {
+#             parameters: {
+#                 id: oxr.spec.parameters.providerConfigName or "default"
+#                 condition: "StringEquals"
+#                 serviceAccount: {
+#                     name: "external-dns"
+#                     namespace: "external-dns"
+#                 },
+#                 policyDocument: """
+#                     {
+#                         "Version":"2012-10-17",
+#                         "Statement":[
+#                           {
+#                             "Effect":"Allow",
+#                             "Action":[
+#                               "route53:ListResourceRecordSets",
+#                               "route53:ListHostedZones"
+#                             ],
+#                             "Resource":"*"
+#                           },
+#                           {
+#                             "Effect":"Allow",
+#                             "Action":"route53:ChangeResourceRecordSets",
+#                             "Resource":"arn:aws:route53:::hostedzone/${oxr.spec.parameters.operators.externaldns.aws.route53ZoneId}
+#                           }
+#                         ]
+#                     }
+#                 """
+#             },
+#         }
+
+#     }
+
+# if oxr.spec.parameters.cloud == "gcp":
+#     _identityExternalDNS = {
+#         apiVersion: "gcp.platform.upbound.io/v1alpha1"
+#         kind: "XWorkloadIdentity"
+#         spec: {
+#           parameters: {
+#             id: oxr.spec.parameters.providerConfigName
+#             dnsProject: oxr.spec.parameters.operators.externaldns.gcp.dnsProject
+#             serviceAccount: {
+#               name: "external-dns"
+#               namespace: "external-dns"
+#             },
+#           },
+#         },
+#     }
+
+_items += [{
     apiVersion: "helm.crossplane.io/v1beta1"
     kind: "Release"
-    metadata: {
+    metadata: _metadata("spaces")  | {
         annotations: {
-            "crossplane.io/external-name": "external-dns"
+            "crossplane.io/external-name" = "spaces"
         }
-    },
-    spec: {
-        rollbackLimit: 3,
-        deletionPolicy: oxr.spec.parameters.deletionPolicy or "Delete"
-        forProvider: {
-            namespace: "external-dns"
-            chart: {
-                name: "external-dns"
-                version: oxr.spec.parameters.operators.externaldns.version or "6.34.2"
-                repository: "https://charts.bitnami.com/bitnami"
-            },
-            values: {
-                replicaCount: 1
-                domainFilters: [
-                    oxr.spec.parameters.operators.externaldns.name
-                ],
-                serviceAccount: {
-                    annotations: [
-                        if oxr.spec.parameters.cloud == "aws":
-                            {
-                                "eks.amazonaws.com/role-arn": oxr.status.status.externalDNS.IRSARoleArn
-                            },
-                        if oxr.spec.parameters.cloud == "gcp":
-                            {
-                                "iam.gke.io/gcp-service-account": oxr.status.status.externalDNS.googleServiceAccount.email
-                            },
-                    ],
-                },
-                txtOwnerId: "upbound-spaces-" + oxr.metadata.uid
-                provider: oxr.spec.parameters.cloud
-                policy: "sync"
-                source: "ingress"
-                registry: "txt"
-                if oxr.spec.parameters.cloud == "aws":
-                    aws: {
-                        batchChangeSize: 4
-                        zoneType: "public"
-                        region: "us-east-1"
-                    },
-                if oxr.spec.parameters.cloud == "gcp":
-                    google: {
-                        project: oxr.spec.parameters.operators.externaldns.gcp.dnsProject
-                    }
-                rbac: {
-                    create: True
-                },
-                serviceAccount: {
-                    create: True
-                    name: "external-dns"
-                },
-                metrics: {
-                    enabled: False
-                    serviceMonitor: {
-                        enabled: False
-                    },
-                },
-                replicas: 2
-                podDisruptionBudget: {
-                    minAvailable: 1
-                },
-            },
-
-        },
-        providerConfigRef: {
-            name: oxr.spec.parameters.providerConfigName or "default"
-        },
     }
-} if oxr.spec.parameters.operators.externaldns.enabled or True == True else {}
-
-if oxr.spec.parameters.cloud == "aws":
-    _identityExternalDNS = {
-        apiVersion: "aws.platform.upbound.io/v1alpha1"
-        kind: "XIRSA"
-        spec: {
-            parameters: {
-                id: oxr.spec.parameters.providerConfigName or "default"
-                condition: "StringEquals"
-                serviceAccount: {
-                    name: "external-dns"
-                    namespace: "external-dns"
-                },
-                policyDocument: """
-                    {
-                        "Version":"2012-10-17",
-                        "Statement":[
-                          {
-                            "Effect":"Allow",
-                            "Action":[
-                              "route53:ListResourceRecordSets",
-                              "route53:ListHostedZones"
-                            ],
-                            "Resource":"*"
-                          },
-                          {
-                            "Effect":"Allow",
-                            "Action":"route53:ChangeResourceRecordSets",
-                            "Resource":"arn:aws:route53:::hostedzone/${oxr.spec.parameters.operators.externaldns.aws.route53ZoneId}
-                          }
-                        ]
-                    }
-                """
-            },
-        }
-
-    }
-
-if oxr.spec.parameters.cloud == "gcp":
-    _identityExternalDNS = {
-        apiVersion: "gcp.platform.upbound.io/v1alpha1"
-        kind: "XWorkloadIdentity"
-        spec: {
-          parameters: {
-            id: oxr.spec.parameters.providerConfigName
-            dnsProject: oxr.spec.parameters.operators.externaldns.gcp.dnsProject
-            serviceAccount: {
-              name: "external-dns"
-              namespace: "external-dns"
-            },
-          },
-        },
-    }
-
-releaseSpaces = {
-    apiVersion: "helm.crossplane.io/v1beta1"
-    kind: "Release"
-    metadata: {
-        annotations: [
-            {
-                "crossplane.io/external-name": "spaces"
-            },
-        ],
-    },
     spec: {
         rollbackLimit: 3,
         forProvider: {
             namespace: "upbound-system"
             chart: {
-                pullSecretRef: oxr.spec.parameters.spaces.pullSecretRef or {"name": "upbound-provider-helm-pull", "namespace": "upbound-system"}
-                version: oxr.spec.parameters.spaces.version or "1.6.0"
+                pullSecretRef: get(oxr, "spec.parameters.spaces.pullSecretRef", {"name": "upbound-provider-helm-pull", "namespace": "upbound-system"})
+                version: get(oxr, "spec.parameters.spaces.version", "1.6.0")
                 name: "spaces"
-                repository: "oci://us-west1-docker.pkg.dev/orchestration-build/upbound-environments"
+                repository: get(oxr, "", "oci://us-west1-docker.pkg.dev/orchestration-build/upbound-environments")
             },
             set: [
                 {
                     name: "account"
-                    value: oxr.spec.parameters.spaces.account
+                    value: get(oxr, "spec.parameters.spaces.account", "")
                 },
-                if oxr.spec.parameters.cloud == "gcp":
+                if get(oxr, "spec.parameters.cloud", "") == "gcp":
                     {
                         name: "clusterType"
                         value: "gke"
                     }
-                if oxr.spec.parameters.cloud == "aws":
+                if get(oxr, "spec.parameters.cloud", "") == "aws":
                     {
                         name: "clusterType"
                         value: "eks"
                     }
-                if oxr.spec.parameters.cloud == "azure":
+                if get(oxr, "spec.parameters.cloud", "") == "azure":
                     {
                         name: "clusterType"
                         value: "aks"
                     }
                 {
                     name: "ingress.host"
-                    value: oxr.spec.parameters.spaces.dns.spacesRouterDomain
+                    value: get(oxr, "spec.parameters.spaces.dns.spacesRouterDomain", "")
                 },
                 {
                     name: "features.alpha.eso.enabled"
@@ -410,15 +418,12 @@ releaseSpaces = {
                 },
             ],
         },
+        providerConfigRef.name: get(oxr, "spec.parameters.id", "")
     }
-}
+} if get(_ocds, "kubernetes.Resource", {}) and all_true([
+    c.status == "True" for c in get(_ocds, "kubernetes.Resource.status.conditions", [])
+]) else {} ]
 
-items = [i for i in [
-    AWSNetwork, AWSKubernetes,
-    xArgoCd, usageByArgoCDOfXEKS,
-    spacePullSecret,
-    # releaseCertManager,
-    # releaseIngressNginx,
-    # releaseExternalDns, _identityExternalDNS
-    # releaseSpaces
-] if i]
+# ToDo(haarchri): add more conditions for prereq
+
+items = _items

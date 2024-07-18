@@ -175,9 +175,7 @@ spec:
                             version:
                               type: string
                               description: "Specifies the version of external-dns to use."
-                              default: "6.34.2"
                           required:
-                            - version
                             - enabled
                     spaces:
                       type: object
